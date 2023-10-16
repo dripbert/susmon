@@ -36,13 +36,15 @@ void disk_info() {
 }
 void cpu_info() {
   DrawRectangle(cpu.x1, cpu.y1, cpu.x2 - cpu.x1, cpu.y2 - cpu.y1, DARKGRAY);
-  DrawText(TextFormat("CPUs: %d", sysconf(_SC_NPROCESSORS_ONLN)), cpu.x1 + 10, cpu.y1 + 30, TSIZE, LIGHTGRAY);
-  DrawText(TextFormat("CPU perc: %d%%", cpu_perc), cpu.x1 + 10, cpu.y1 + 46, TSIZE, LIGHTGRAY);
-  DrawText(TextFormat("CPU freq: %.1f Ghz", sus_cpu_freq()), cpu.x1 + 10, cpu.y1 + 62, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("CPUs: %d", sysconf(_SC_NPROCESSORS_ONLN)), cpu.x1 + 10, cpu.y1 + 10, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("CPU perc: %d%%", cpu_perc), cpu.x1 + 10, cpu.y1 + 26, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("CPU freq: %.1f Ghz", sus_cpu_freq()), cpu.x1 + 10, cpu.y1 + 42, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("CPU temp: %.1f°C", sus_cpu_temp()), cpu.x1 + 10, cpu.y1 + 58, TSIZE, LIGHTGRAY);
+  DrawLine(cpu.x1, cpu.y2 - 105, cpu.x2, cpu.y2 - 105, LIGHTGRAY);
 
   int h;
   for (int i = 0; i < CPU_GRAPH_LEN; ++i) {
-    h = cpu_perc_graph[i];
+    h = cpu_perc_graph[i] + 5;
     DrawRectangle(cpu.x1 + (10 * i), cpu.y2 - h, 5, h, RED);
   }
 }
