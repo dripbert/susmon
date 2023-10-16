@@ -2,12 +2,15 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include "susmon.h"
 
 #ifdef __FreeBSD__
 #include <sys/sysctl.h>
+#include <devstat.h>
 #endif
 
 #include "./components.c"
@@ -18,15 +21,14 @@
 #define HSIZE  20
 #define TSIZE  16
 
-
 typedef struct Timer {
   double start_time;
   double duration;
 } Timer;
 
-
-#define cpu_freq_graph_len 20
-float cpu_freq_graph[cpu_freq_graph_len] = {0.0f};
+#define CPU_GRAPH_LEN 20
+float cpu_perc_graph[CPU_GRAPH_LEN] = {0.0f};
+uint8_t cpu_perc;
 
 void disk_info() {
   DrawRectangle(disk.x1, disk.y1, disk.x2 - disk.x1, disk.y2 - disk.y1, DARKGRAY);
@@ -35,12 +37,12 @@ void disk_info() {
 void cpu_info() {
   DrawRectangle(cpu.x1, cpu.y1, cpu.x2 - cpu.x1, cpu.y2 - cpu.y1, DARKGRAY);
   DrawText(TextFormat("CPUs: %d", sysconf(_SC_NPROCESSORS_ONLN)), cpu.x1 + 10, cpu.y1 + 30, TSIZE, LIGHTGRAY);
-  DrawText(TextFormat("CPU perc: %d%%", sus_cpu_perc()), cpu.x1 + 10, cpu.y1 + 46, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("CPU perc: %d%%", cpu_perc), cpu.x1 + 10, cpu.y1 + 46, TSIZE, LIGHTGRAY);
   DrawText(TextFormat("CPU freq: %.1f Ghz", sus_cpu_freq()), cpu.x1 + 10, cpu.y1 + 62, TSIZE, LIGHTGRAY);
 
   int h;
-  for (int i = 0; i < cpu_freq_graph_len; ++i) {
-    h = cpu_freq_graph[i] * 10;
+  for (int i = 0; i < CPU_GRAPH_LEN; ++i) {
+    h = cpu_perc_graph[i];
     DrawRectangle(cpu.x1 + (10 * i), cpu.y2 - h, 5, h, RED);
   }
 }
@@ -57,9 +59,15 @@ int main(void)
   disk.contents = disk_info;
 
   Timer graph_refresh = {.start_time = GetTime(), .duration = 5};
+  Timer cpu_perc_refresh = {.start_time = GetTime(), .duration = 1};
   Vector2 mouse = { -100.0f, -100.0f };
 
   while (!WindowShouldClose()) {
+    if (GetTime() - cpu_perc_refresh.start_time > cpu_perc_refresh.duration) {
+      cpu_perc = sus_cpu_perc();
+      cpu_perc_refresh.start_time = GetTime();
+    }
+
     mouse = GetMousePosition();
 
     for (int i = 0; i < cards_len; ++i) {
@@ -84,10 +92,10 @@ int main(void)
     }
 
     if (GetTime() - graph_refresh.start_time > graph_refresh.duration) {
-      cpu_freq_graph[cpu_freq_graph_len - 1] = sus_cpu_freq();
+      cpu_perc_graph[CPU_GRAPH_LEN - 1] = cpu_perc;
 
-      for (int i = 0; i < cpu_freq_graph_len - 1; ++i) {
-        cpu_freq_graph[i] = cpu_freq_graph[i + 1];
+      for (int i = 0; i < CPU_GRAPH_LEN - 1; ++i) {
+        cpu_perc_graph[i] = cpu_perc_graph[i + 1];
         graph_refresh.start_time = GetTime();
       }
     }
@@ -99,7 +107,10 @@ int main(void)
     for (int i = 0; i < cards_len; ++i){
       Card c = *cards[i];
       DrawRectangle(c.x1, c.y1 - 20, c.x2 - c.x1, 20, ORANGE);
-      DrawRectangle(c.x2 - 20, c.y1 - 20, 20, 20, RED);
+      if (c.minimized)
+        DrawText("+", c.x2 - 20, c.y1 - 20, HSIZE, RED);
+      else
+        DrawText("-", c.x2 - 20, c.y1 - 20, HSIZE, RED);
       DrawText(c.title, c.x1, c.y1 - 20, HSIZE, BLACK);
       if(!c.minimized){
         c.contents();

@@ -1,6 +1,26 @@
 int sus_cpu_perc()
 {
-  return -1;
+  int perc = -1;
+
+  #ifdef __FreeBSD__
+  static long t[CPUSTATES];
+  long p[CPUSTATES], u, c;
+
+  size_t size = sizeof(t);
+  memcpy(p, t, sizeof(p));
+
+  if (sysctlbyname("kern.cp_time", &t, &size, NULL, 0) < 0) {
+    fprintf(stderr, "ERROR: Failed to get cpu frequency!\n");
+    return -1;
+  }
+  u = (t[CP_USER] + t[CP_NICE] + t[CP_SYS]) -
+      (p[CP_USER] + p[CP_NICE] + p[CP_SYS]); 
+  c = (t[CP_USER] + t[CP_NICE] + t[CP_SYS] + t[CP_INTR] + t[CP_IDLE]) -
+      (p[CP_USER] + p[CP_NICE] + p[CP_SYS] + p[CP_INTR] + p[CP_IDLE]);
+
+  perc = 100*u/c;
+  #endif
+  return perc;
 }
 
 float sus_cpu_freq()
