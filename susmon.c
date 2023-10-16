@@ -32,7 +32,7 @@ uint8_t cpu_perc;
 
 void disk_info() {
   DrawRectangle(disk.x1, disk.y1, disk.x2 - disk.x1, disk.y2 - disk.y1, DARKGRAY);
-  DrawText(TextFormat("Disk: %.1fGig/%.1f Gig", sus_disk_total(), sus_disk_total()), disk.x1 + 10, disk.y1 + 30, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("Disk: %.1fGig/%.1f Gig", 0.0f, sus_disk_total()), disk.x1 + 10, disk.y1 + 30, TSIZE, LIGHTGRAY);
 }
 void cpu_info() {
   DrawRectangle(cpu.x1, cpu.y1, cpu.x2 - cpu.x1, cpu.y2 - cpu.y1, DARKGRAY);
@@ -69,6 +69,14 @@ int main(void)
       cpu_perc = sus_cpu_perc();
       cpu_perc_refresh.start_time = GetTime();
     }
+    if (GetTime() - graph_refresh.start_time > graph_refresh.duration) {
+      cpu_perc_graph[CPU_GRAPH_LEN - 1] = cpu_perc;
+
+      for (int i = 0; i < CPU_GRAPH_LEN - 1; ++i) {
+        cpu_perc_graph[i] = cpu_perc_graph[i + 1];
+        graph_refresh.start_time = GetTime();
+      }
+    }
 
     mouse = GetMousePosition();
 
@@ -93,14 +101,6 @@ int main(void)
       }
     }
 
-    if (GetTime() - graph_refresh.start_time > graph_refresh.duration) {
-      cpu_perc_graph[CPU_GRAPH_LEN - 1] = cpu_perc;
-
-      for (int i = 0; i < CPU_GRAPH_LEN - 1; ++i) {
-        cpu_perc_graph[i] = cpu_perc_graph[i + 1];
-        graph_refresh.start_time = GetTime();
-      }
-    }
 
     BeginDrawing();
     
@@ -108,13 +108,14 @@ int main(void)
 
     for (int i = 0; i < cards_len; ++i){
       Card c = *cards[i];
-      DrawRectangle(c.x1, c.y1 - 20, c.x2 - c.x1, 20, ORANGE);
+      DrawRectangle(c.x1 - 2, c.y1 - 20, c.x2 - c.x1 + 4, 20, c.color);
       if (c.minimized)
         DrawText("+", c.x2 - 20, c.y1 - 20, HSIZE, RED);
       else
         DrawText("-", c.x2 - 20, c.y1 - 20, HSIZE, RED);
       DrawText(c.title, c.x1, c.y1 - 20, HSIZE, BLACK);
       if(!c.minimized){
+        DrawRectangleLinesEx((Rectangle){c.x1 - 2, c.y1, c.x2 - c.x1 + 4, c.y2 - c.y1 + 2}, 2, c.color);
         c.contents();
       }
     }

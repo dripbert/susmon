@@ -71,6 +71,6 @@ float sus_mem_used()
 
 int sus_disk_total ()
 {
-  return - 1;
+  return 0;
 }
 #endif
