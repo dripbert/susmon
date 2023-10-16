@@ -11,63 +11,22 @@
 #endif
 
 #include "./components.c"
+#include "./cards.h"
 
 #define WIDTH  1000
 #define HEIGHT 500
 #define HSIZE  20
 #define TSIZE  16
 
-typedef void (*Contents)();
 
 typedef struct Timer {
   double start_time;
   double duration;
 } Timer;
 
-typedef struct Card {
-  int x1;
-  int y1;
-  int x2;
-  int y2;
-  bool minimized;
-  bool moving;
-  Contents contents;
-  char *title;
-} Card;
 
-Card disk = {
-  .x1 = 460,
-  .y1 = 20,
-  .x2 = 460 + 200,
-  .y2 = 20 + 200,
-  .minimized = true,
-  .moving = false,
-  .contents = disk_info,
-  .title = "DISK",
-};
-Card cpu = {
-  .x1 = 20,
-  .y1 = 20,
-  .x2 = 20 + 200,
-  .y2 = 20 + 200,
-  .minimized = false,
-  .moving = false,
-  .contents = cpu_info,
-  .title = "CPU",
-};
-Card mem = {
-  .x1 = 240,
-  .y1 = 20,
-  .x2 = 240 + 200,
-  .y2 = 20 + 200,
-  .minimized = false,
-  .moving = false,
-  .contents = mem_info,
-  .title = "MEMORY",
-};
-
-const int cpu_freq_graph_len = 20; 
-float cpu_freq_graph[cpu_freq_graph_len] = {0};
+#define cpu_freq_graph_len 20
+float cpu_freq_graph[cpu_freq_graph_len] = {0.0f};
 
 void disk_info() {
   DrawRectangle(disk.x1, disk.y1, disk.x2 - disk.x1, disk.y2 - disk.y1, DARKGRAY);
@@ -92,58 +51,37 @@ void mem_info() {
 
 int main(void)
 {
-  Card *cards[] = {&cpu, &mem, &disk};
-  int cards_len = 3;
+  int cards_len = sizeof(cards)/sizeof(Card*);
   InitWindow(WIDTH, HEIGHT, "susmon");
 
   disk.contents = disk_info;
 
   Timer graph_refresh = {.start_time = GetTime(), .duration = 5};
-
-
   Vector2 mouse = { -100.0f, -100.0f };
 
   while (!WindowShouldClose()) {
     mouse = GetMousePosition();
 
-    if (cpu.moving) {
-      cpu.x1 = mouse.x;
-      cpu.y1 = mouse.y;
-      cpu.x2 = cpu.x1 + 200;
-      cpu.y2 = cpu.y1 + 200;
-      if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-        cpu.moving = false;
+    for (int i = 0; i < cards_len; ++i) {
+      Card *c = cards[i];
+      if (c->moving) {
+        c->x1 = mouse.x;
+        c->y1 = mouse.y;
+        c->x2 = c->x1 + 200;
+        c->y2 = c->y1 + 200;
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+          c->moving = false;
+        break;
+      }
+      if (mouse.x >= c->x2 - 20 && mouse.x <= c->x2 && mouse.y >= c->y1 - 20 && mouse.y <= c->y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        c->minimized = !c->minimized;
+        break;
+      }
+      if (mouse.x >= c->x1 && mouse.x <= c->x2 && mouse.y >= c->y1 - 20 && mouse.y <= c->y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        c->moving = true;
+        break;
+      }
     }
-    else if (mem.moving) {
-      mem.x1 = mouse.x;
-      mem.y1 = mouse.y;
-      mem.x2 = mem.x1 + 200;
-      mem.y2 = mem.y1 + 200;
-      if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-        mem.moving = false;
-    }
-    else if (disk.moving) {
-      disk.x1 = mouse.x;
-      disk.y1 = mouse.y;
-      disk.x2 = disk.x1 + 200;
-      disk.y2 = disk.y1 + 200;
-      if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-        disk.moving = false;
-    }
-
-    if (mouse.x >= disk.x2 - 20 && mouse.x <= disk.x2 && mouse.y >= disk.y1 - 20 && mouse.y <= disk.y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-      disk.minimized = !disk.minimized;
-    else if (mouse.x >= mem.x2 - 20 && mouse.x <= mem.x2 && mouse.y >= mem.y1 - 20 && mouse.y <= mem.y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-      mem.minimized = !mem.minimized;
-    else if (mouse.x >= cpu.x2 - 20 && mouse.x <= cpu.x2 && mouse.y >= cpu.y1 - 20 && mouse.y <= cpu.y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-      cpu.minimized = !cpu.minimized;
-
-    else if (mouse.x >= cpu.x1 && mouse.x <= cpu.x2 && mouse.y >= cpu.y1 - 20 && mouse.y <= cpu.y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-      cpu.moving = true;
-    else if (mouse.x >= mem.x1 && mouse.x <= mem.x2 && mouse.y >= mem.y1 - 20 && mouse.y <= mem.y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-      mem.moving = true;
-    else if (mouse.x >= disk.x1 && mouse.x <= disk.x2 && mouse.y >= disk.y1 - 20 && mouse.y <= disk.y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-      disk.moving = true;
 
     if (GetTime() - graph_refresh.start_time > graph_refresh.duration) {
       cpu_freq_graph[cpu_freq_graph_len - 1] = sus_cpu_freq();
@@ -158,8 +96,6 @@ int main(void)
     
     ClearBackground(BLACK);
 
-
-    // CPU INFO
     for (int i = 0; i < cards_len; ++i){
       Card c = *cards[i];
       DrawRectangle(c.x1, c.y1 - 20, c.x2 - c.x1, 20, ORANGE);
@@ -168,7 +104,6 @@ int main(void)
       if(!c.minimized){
         c.contents();
       }
-
     }
 
     // DrawLine(0, 240, WIDTH, 240, WHITE);
