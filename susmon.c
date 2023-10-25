@@ -32,7 +32,7 @@ uint8_t cpu_perc;
 
 void disk_info() {
   DrawRectangle(disk.x1, disk.y1, disk.x2 - disk.x1, disk.y2 - disk.y1, DARKGRAY);
-  DrawText(TextFormat("Disk: %.1fGig/%.1f Gig", 0.0f, sus_disk_total()), disk.x1 + 10, disk.y1 + 30, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("Disk: %.1fGig/%.1f Gig", 0.0f, sus_disk_total()), disk.x1 + 10, disk.y1 + 10, TSIZE, LIGHTGRAY);
 }
 void cpu_info() {
   DrawRectangle(cpu.x1, cpu.y1, cpu.x2 - cpu.x1, cpu.y2 - cpu.y1, DARKGRAY);
@@ -50,7 +50,7 @@ void cpu_info() {
 }
 void mem_info() {
   DrawRectangle(mem.x1, mem.y1, mem.x2 - mem.x1, mem.y2 - mem.y1, DARKGRAY);
-  DrawText(TextFormat("Mem: %.1fGig/%.1f Gig", sus_mem_used(), sus_mem_phys()), mem.x1 + 10, mem.y1 + 30, TSIZE, LIGHTGRAY);
+  DrawText(TextFormat("Mem: %.1fGig/%.1f Gig", sus_mem_used(), sus_mem_phys()), mem.x1 + 10, mem.y1 + 10, TSIZE, LIGHTGRAY);
 }
 
 int main(void)
@@ -63,8 +63,10 @@ int main(void)
   Timer graph_refresh = {.start_time = GetTime(), .duration = 5};
   Timer cpu_perc_refresh = {.start_time = GetTime(), .duration = 1};
   Vector2 mouse = { -100.0f, -100.0f };
+  Font djvb20 = LoadFontEx("resources/DejaVuSans-Bold.ttf", 20, 0, 256);
 
   while (!WindowShouldClose()) {
+    clock_t start_time = clock();
     if (GetTime() - cpu_perc_refresh.start_time > cpu_perc_refresh.duration) {
       cpu_perc = sus_cpu_perc();
       cpu_perc_refresh.start_time = GetTime();
@@ -113,16 +115,16 @@ int main(void)
         DrawText("+", c.x2 - 20, c.y1 - 20, HSIZE, RED);
       else
         DrawText("-", c.x2 - 20, c.y1 - 20, HSIZE, RED);
-      DrawText(c.title, c.x1, c.y1 - 20, HSIZE, BLACK);
+      DrawTextEx(djvb20, c.title, (Vector2){c.x1, c.y1 - 20}, (float)djvb20.baseSize, 2, BLACK);
       if(!c.minimized){
         DrawRectangleLinesEx((Rectangle){c.x1 - 2, c.y1, c.x2 - c.x1 + 4, c.y2 - c.y1 + 2}, 2, c.color);
         c.contents();
       }
     }
 
-    // DrawLine(0, 240, WIDTH, 240, WHITE);
-
-    WaitTime(0.1);
+    clock_t end_time = clock();
+    if (end_time - start_time < 0.03)
+      WaitTime(0.03 - (end_time - start_time));
     EndDrawing();
   }
 
