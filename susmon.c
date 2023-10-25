@@ -65,6 +65,9 @@ int main(void)
   Vector2 mouse = { -100.0f, -100.0f };
   Font djvb20 = LoadFontEx("resources/DejaVuSans-Bold.ttf", 20, 0, 256);
 
+  int relative_mouse_position_x;
+  int relative_mouse_position_y;
+
   while (!WindowShouldClose()) {
     clock_t start_time = clock();
     if (GetTime() - cpu_perc_refresh.start_time > cpu_perc_refresh.duration) {
@@ -85,8 +88,8 @@ int main(void)
     for (int i = 0; i < cards_len; ++i) {
       Card *c = cards[i];
       if (c->moving) {
-        c->x1 = mouse.x;
-        c->y1 = mouse.y;
+        c->x1 = mouse.x - relative_mouse_position_x;
+        c->y1 = mouse.y - relative_mouse_position_y;
         c->x2 = c->x1 + 200;
         c->y2 = c->y1 + 200;
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
@@ -98,6 +101,8 @@ int main(void)
         break;
       }
       if (mouse.x >= c->x1 && mouse.x <= c->x2 && mouse.y >= c->y1 - 20 && mouse.y <= c->y1 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        relative_mouse_position_x = mouse.x - c->x1;
+        relative_mouse_position_y = mouse.y - c->y1;
         c->moving = true;
         break;
       }
