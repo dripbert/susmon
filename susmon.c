@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include "susmon.h"
+#include "config.h"
 
 #ifdef __FreeBSD__
 #include <sys/sysctl.h>
@@ -65,8 +66,8 @@ int main(void)
   Timer graph_refresh = {.start_time = GetTime(), .duration = 5};
   Timer cpu_perc_refresh = {.start_time = GetTime(), .duration = 1};
   Vector2 mouse = { -100.0f, -100.0f };
-  Font font_big = LoadFontEx("resources/DejaVuSans-Bold.ttf", 20, 0, 256);
-  font_small = LoadFontEx("resources/DejaVuSans.ttf", 16, 0, 256);
+  Font font_big = LoadFontEx(font_title, 20, 0, 256);
+  font_small = LoadFontEx(font_cont, 16, 0, 256);
 
   int relative_mouse_position_x;
   int relative_mouse_position_y;
