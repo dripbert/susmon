@@ -30,16 +30,20 @@ typedef struct Timer {
 float cpu_perc_graph[CPU_GRAPH_LEN] = {0.0f};
 uint8_t cpu_perc;
 
+void draw_card_text(const char *text, int x, int y, int offset, int m) {
+  DrawTextEx(font_small, text, (Vector2){x, y + (offset * m)}, (float)font_small.baseSize, 2, RAYWHITE);
+}
+
 void disk_info() {
   DrawRectangle(disk.x1, disk.y1, disk.x2 - disk.x1, disk.y2 - disk.y1, DARKGRAY);
-  DrawText(TextFormat("Disk: %.1fGig/%.1f Gig", 0.0f, sus_disk_total()), disk.x1 + 10, disk.y1 + 10, TSIZE, LIGHTGRAY);
+  draw_card_text(TextFormat("Disk: %.1fGig/%.1f Gig", 0.0f, sus_disk_total()), disk.x1 + 10, disk.y1 + 10, 16, 0);
 }
 void cpu_info() {
   DrawRectangle(cpu.x1, cpu.y1, cpu.x2 - cpu.x1, cpu.y2 - cpu.y1, DARKGRAY);
-  DrawText(TextFormat("CPUs: %d", sysconf(_SC_NPROCESSORS_ONLN)), cpu.x1 + 10, cpu.y1 + 10, TSIZE, LIGHTGRAY);
-  DrawText(TextFormat("CPU perc: %d%%", cpu_perc), cpu.x1 + 10, cpu.y1 + 26, TSIZE, LIGHTGRAY);
-  DrawText(TextFormat("CPU freq: %.1f Ghz", sus_cpu_freq()), cpu.x1 + 10, cpu.y1 + 42, TSIZE, LIGHTGRAY);
-  DrawText(TextFormat("CPU temp: %.1f°C", sus_cpu_temp()), cpu.x1 + 10, cpu.y1 + 58, TSIZE, LIGHTGRAY);
+  draw_card_text(TextFormat("CPUs: %d", sysconf(_SC_NPROCESSORS_ONLN)), cpu.x1 + 10, cpu.y1 + 10, 16, 0);
+  draw_card_text(TextFormat("CPU perc: %d%%", cpu_perc), cpu.x1 + 10, cpu.y1 + 10, 16, 1);
+  draw_card_text(TextFormat("CPU freq: %.1f Ghz", sus_cpu_freq()), cpu.x1 + 10, cpu.y1 + 10, 16, 2);
+  draw_card_text(TextFormat("CPU temp: %.1f°C", sus_cpu_temp()), cpu.x1 + 10, cpu.y1 + 10, 16, 3);
   DrawLine(cpu.x1, cpu.y2 - 105, cpu.x2, cpu.y2 - 105, LIGHTGRAY);
 
   int h;
@@ -50,7 +54,7 @@ void cpu_info() {
 }
 void mem_info() {
   DrawRectangle(mem.x1, mem.y1, mem.x2 - mem.x1, mem.y2 - mem.y1, DARKGRAY);
-  DrawText(TextFormat("Mem: %.1fGig/%.1f Gig", sus_mem_used(), sus_mem_phys()), mem.x1 + 10, mem.y1 + 10, TSIZE, LIGHTGRAY);
+  draw_card_text(TextFormat("Mem: %.1fGig/%.1f Gig", sus_mem_used(), sus_mem_phys()), mem.x1 + 10, mem.y1 + 10, 16, 0);
 }
 
 int main(void)
@@ -58,12 +62,11 @@ int main(void)
   int cards_len = sizeof(cards)/sizeof(Card*);
   InitWindow(WIDTH, HEIGHT, "susmon");
 
-  disk.contents = disk_info;
-
   Timer graph_refresh = {.start_time = GetTime(), .duration = 5};
   Timer cpu_perc_refresh = {.start_time = GetTime(), .duration = 1};
   Vector2 mouse = { -100.0f, -100.0f };
-  Font djvb20 = LoadFontEx("resources/DejaVuSans-Bold.ttf", 20, 0, 256);
+  Font font_big = LoadFontEx("resources/DejaVuSans-Bold.ttf", 20, 0, 256);
+  font_small = LoadFontEx("resources/DejaVuSans.ttf", 16, 0, 256);
 
   int relative_mouse_position_x;
   int relative_mouse_position_y;
@@ -115,17 +118,19 @@ int main(void)
 
     for (int i = 0; i < cards_len; ++i){
       Card c = *cards[i];
-      DrawRectangle(c.x1 - 2, c.y1 - 20, c.x2 - c.x1 + 4, 20, c.color);
+      DrawRectangle(c.x1 - 2, c.y1 - 20, c.x2 - c.x1 + 4, 20, ORANGE);
       if (c.minimized)
         DrawText("+", c.x2 - 20, c.y1 - 20, HSIZE, RED);
       else
         DrawText("-", c.x2 - 20, c.y1 - 20, HSIZE, RED);
-      DrawTextEx(djvb20, c.title, (Vector2){c.x1, c.y1 - 20}, (float)djvb20.baseSize, 2, BLACK);
+      DrawTextEx(font_big, c.title, (Vector2){c.x1, c.y1 - 20}, (float)font_big.baseSize, 2, BLACK);
       if(!c.minimized){
-        DrawRectangleLinesEx((Rectangle){c.x1 - 2, c.y1, c.x2 - c.x1 + 4, c.y2 - c.y1 + 2}, 2, c.color);
+        DrawRectangleLinesEx((Rectangle){c.x1 - 2, c.y1, c.x2 - c.x1 + 4, c.y2 - c.y1 + 2}, 2, ORANGE);
         c.contents();
       }
     }
+
+    //DrawTextEx(djvb16, "hello", (Vector2){cpu.x1 + 10, cpu.y1 + 10}, (float)djvb16.baseSize, 2, LIGHTGRAY);
 
     clock_t end_time = clock();
     if (end_time - start_time < 0.03)
