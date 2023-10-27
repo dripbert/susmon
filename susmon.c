@@ -58,6 +58,12 @@ void mem_info() {
   draw_card_text(TextFormat("Mem: %.1fGig/%.1f Gig", sus_mem_used(), sus_mem_phys()), mem.x1 + 10, mem.y1 + 10, 16, 0);
 }
 
+bool check_bounds(Vector2 pos, int x1, int y1, int x2, int y2) {
+  if (pos.x >= x1 && pos.y >= y1 && pos.x <= x2 && pos.y <= y2)
+    return 1;
+  return 0;
+}
+
 int main(void)
 {
   int cards_len = sizeof(cards)/sizeof(Card*);
@@ -91,7 +97,7 @@ int main(void)
 
     for (int i = 0; i < cards_len; ++i) {
       Card *c = cards[i];
-      if (c->moving) {
+      if (c->moving && check_bounds(mouse, 0, 0, WIDTH, HEIGHT)) {
         c->x1 = mouse.x - relative_mouse_position_x;
         c->y1 = mouse.y - relative_mouse_position_y;
         c->x2 = c->x1 + 200;
