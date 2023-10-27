@@ -47,11 +47,22 @@ void cpu_info() {
   draw_card_text(TextFormat("CPU temp: %.1f°C", sus_cpu_temp()), cpu.x1 + 10, cpu.y1 + 10, 16, 3);
   DrawLine(cpu.x1, cpu.y2 - 105, cpu.x2, cpu.y2 - 105, LIGHTGRAY);
 
+  #ifdef CPU_GRAPH_TYPE_BAR
   int h;
   for (int i = 0; i < CPU_GRAPH_LEN; ++i) {
     h = cpu_perc_graph[i] + 5;
     DrawRectangle(cpu.x1 + (10 * i), cpu.y2 - h, 5, h, RED);
   }
+  #endif
+  #ifdef CPU_GRAPH_TYPE_LINE
+  int h;
+  for (int i = 0; i < CPU_GRAPH_LEN - 1; ++i) {
+    int h1 = cpu_perc_graph[i] + 5;
+    int h2 = cpu_perc_graph[i + 1] + 5;
+
+    DrawLine(cpu.x1 + (10 * i), cpu.y2 - h1, cpu.x1 + (10 * (i + 1)), cpu.y2 - h2, RED);
+  }
+  #endif
 }
 void mem_info() {
   DrawRectangle(mem.x1, mem.y1, mem.x2 - mem.x1, mem.y2 - mem.y1, DARKGRAY);
